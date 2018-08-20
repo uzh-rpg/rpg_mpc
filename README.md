@@ -8,17 +8,15 @@ It is available with the extension to be used as a "Perception Aware Model Predi
 [![PAMPC: Perception-Aware Model Predictive Control for Quadrotors](http://rpg.ifi.uzh.ch/img/quad_control/mpc_thumb_button_small.png)](https://www.youtube.com/watch?v=9vaj829vE18)
 
 ## Publication
-If you use this code in an academic context, please cite the following [arXiv paper](https://arxiv.org/abs/1804.04811).
+If you use this code in an academic context, please cite the following [IROS 2018 paper](http://rpg.ifi.uzh.ch/docs/IROS18_Falanga.pdf).
 
-Davide Falanga, Philipp Foehn, Peng Lu, Davide Scaramuzza: **PAMPC: Perception-Aware Model Predictive Control for Quadrotors**, arXiv.org
+Davide Falanga, Philipp Foehn, Peng Lu, Davide Scaramuzza: **PAMPC: Perception-Aware Model Predictive Control for Quadrotors**, IEEE/RSJ Int. Conf. Intell. Robot. Syst. (IROS), 2018.
 
 ```
-@article{Falanga2018
+@InProceedings{Falanga2018
   author = {Falanga, Davide and Foehn, Philipp and Lu, Peng and Scaramuzza, Davide},
   title = {{PAMPC}: Perception-Aware Model Predictive Control for Quadrotors},
-  journal = {arxiv},
-  arxivid = {1804.04811},
-  url = {https://arxiv.org/abs/1804.04811},
+  booktitle = {IEEE/RSJ Int. Conf. Intell. Robot. Syst. (IROS)},
   year = {2018}
 }
 ```
