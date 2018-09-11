@@ -205,6 +205,10 @@ bool MpcController<T>::setReference(
                                   q_orientation.y(),
                                   q_orientation.z(),
                                   iterator->velocity.template cast<T>();
+      if(reference_states_.col(i).segment(kOriW,4).dot(
+        est_state_.segment(kOriW,4))<0.0)
+          reference_states_.block(kOriW,i,4,1) =
+            -reference_states_.block(kOriW,i,4,1);
       acceleration << iterator->acceleration.template cast<T>() - gravity;
       reference_inputs_.col(i) << acceleration.norm(),
                                   iterator->bodyrates.template cast<T>();
