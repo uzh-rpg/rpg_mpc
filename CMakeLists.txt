@@ -91,12 +91,17 @@ target_link_libraries(mpc_controller_node
   mpc_wrapper
   mpc_solver)
 
-cs_add_executable(autopilot_mpc_instance
-  src/autopilot_mpc_instance.cpp)
-target_link_libraries(autopilot_mpc_instance
-  mpc_controller
-  mpc_wrapper
-  mpc_solver)
+if(catkin_LIBRARIES MATCHES "autopilot")
+
+  message("Building with MPC Autopilot")
+  cs_add_executable(autopilot_mpc_instance
+    src/autopilot_mpc_instance.cpp)
+  target_link_libraries(autopilot_mpc_instance
+    mpc_controller
+    mpc_wrapper
+    mpc_solver)
+
+endif(catkin_LIBRARIES MATCHES "autopilot")
 
 cs_install()
 
