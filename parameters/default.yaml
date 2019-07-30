@@ -23,7 +23,7 @@
 # Cost on states
 Q_pos_xy:     200   # Cost for horizontal positon error
 Q_pos_z:      500   # Cost for vertical position error
-Q_attitude:   50    # Cost for attitude error
+Q_attitude:   200    # Cost for attitude error
 Q_velocity:   10    # Cost for velocity error
 Q_perception: 0     # Cost for reprojection error to camera optical axis (PAMPC)
 
@@ -38,10 +38,10 @@ state_cost_exponential: 0.0     # Scaling for state costs
 input_cost_exponential: 0.0     # scaling for input costs
 
 # Limits for inputs
-max_bodyrate_xy:    3.0       # ~ pi [rad/s]
-max_bodyrate_z:     2         # ~ pi*2/3 [rad/s]
-min_thrust:         2.0       # ~ 20% gravity [N]
-max_thrust:         20.0      # ~ 200% gravity [N]
+max_bodyrate_xy:    20.0       # ~ pi [rad/s]
+max_bodyrate_z:     5         # ~ pi*2/3 [rad/s]
+min_thrust:         1.0       # ~ 20% gravity [N]
+max_thrust:         40.0      # ~ 200% gravity [N]
 
 # Extrinsics for Perception Aware MPC
 p_B_C:      [ 0.0, 0.0, 0.0 ]               # camera in body center [m]
