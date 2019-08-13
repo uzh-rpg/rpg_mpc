@@ -36,6 +36,7 @@
 #include <quadrotor_common/trajectory_point.h>
 #include <ros/ros.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Empty.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 
 #include "rpg_mpc/mpc_wrapper.h"
@@ -92,6 +93,8 @@ class MpcController {
   void pointOfInterestCallback(
     const geometry_msgs::PointStamped::ConstPtr& msg);
 
+  void offCallback(const std_msgs::Empty::ConstPtr& msg);
+
   bool setStateEstimate(
     const quadrotor_common::QuadStateEstimate& state_estimate);
 
@@ -117,6 +120,7 @@ class MpcController {
 
   // Subscribers and publisher.
   ros::Subscriber sub_point_of_interest_;
+  ros::Subscriber sub_autopilot_off_;
   ros::Publisher pub_predicted_trajectory_;
 
   // Parameters
@@ -130,6 +134,7 @@ class MpcController {
 
   // Variables
   T timing_feedback_, timing_preparation_;
+  bool solve_from_scratch_;
   Eigen::Matrix<T, kStateSize, 1> est_state_;
   Eigen::Matrix<T, kStateSize, kSamples+1> reference_states_;
   Eigen::Matrix<T, kInputSize, kSamples+1> reference_inputs_;

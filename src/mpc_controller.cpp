@@ -48,6 +48,8 @@ MpcController<T>::MpcController(
 
   sub_point_of_interest_ = nh_.subscribe("mpc/point_of_interest", 1,
                                          &MpcController<T>::pointOfInterestCallback, this);
+  sub_autopilot_off_ = nh_.subscribe("autopilot/off", 1,
+                                    &MpcController<T>::offCallback, this);
 
   if (!params_.loadParameters(pnh_)) {
     ROS_ERROR("[%s] Could not load parameters.", pnh_.getNamespace().c_str());
@@ -56,6 +58,7 @@ MpcController<T>::MpcController(
   }
   setNewParams(params_);
 
+  solve_from_scratch_ = true;
   preparation_thread_ = std::thread(&MpcWrapper<T>::prepare, mpc_wrapper_);
 }
 
@@ -66,6 +69,12 @@ void MpcController<T>::pointOfInterestCallback(
   point_of_interest_(1) = msg->point.y;
   point_of_interest_(2) = msg->point.z;
   mpc_wrapper_.setPointOfInterest(point_of_interest_);
+}
+
+template<typename T>
+void MpcController<T>::offCallback(
+    const std_msgs::Empty::ConstPtr& msg) {
+  solve_from_scratch_ = true;
 }
 
 template<typename T>
@@ -99,7 +108,13 @@ quadrotor_common::ControlCommand MpcController<T>::run(
 
   // Get the feedback from MPC.
   mpc_wrapper_.setTrajectory(reference_states_, reference_inputs_);
-  mpc_wrapper_.update(est_state_, do_preparation_step);
+  if (solve_from_scratch_) {
+    ROS_INFO("Solving MPC from Hover Conditions.");
+    mpc_wrapper_.solve(est_state_);
+    solve_from_scratch_ = false;
+  } else {
+    mpc_wrapper_.update(est_state_, do_preparation_step);
+  }
   mpc_wrapper_.getStates(predicted_states_);
   mpc_wrapper_.getInputs(predicted_inputs_);
 
