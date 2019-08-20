@@ -75,12 +75,16 @@ MpcWrapper<T>::MpcWrapper()
   }
 
   // Initialize online data.
-  Eigen::Matrix<T, 3, 1> p_B_C(0, 0, 0);
+  /*Eigen::Matrix<T, 3, 1> p_B_C(0, 0, 0);
   Eigen::Quaternion<T> q_B_C(1, 0, 0, 0);
   Eigen::Matrix<T, 3, 1> point_of_interest(0, 0, -1000);
 
   setCameraParameters(p_B_C, q_B_C);
-  setPointOfInterest(point_of_interest);
+  setPointOfInterest(point_of_interest);*/
+  
+  Eigen::Matrix<T, 3, 3> J(Eigen::Matrix<T, 3, 3>::Identity());
+  Eigen::Matrix<T, 3, 3> J_inv = J.inverse();
+  setInertia(J, J_inv);
 
   // Initialize solver.
   acado_initializeNodesByForwardSimulation();
@@ -180,7 +184,7 @@ bool MpcWrapper<T>::setLimits(T min_thrust, T max_thrust,
 }
 
 // Set camera extrinsics.
-template <typename T>
+/*template <typename T>
 bool MpcWrapper<T>::setCameraParameters(
   const Eigen::Ref<const Eigen::Matrix<T, 3, 1>>& p_B_C,
   Eigen::Quaternion<T>& q_B_C)
@@ -204,6 +208,17 @@ bool MpcWrapper<T>::setPointOfInterest(
   acado_online_data_.block(0, 0, 3, ACADO_N+1)
     = position.replicate(1, ACADO_N+1).template cast<float>();
   return true;
+}*/
+
+template <typename T>
+bool MpcWrapper<T>::setInertia(const Eigen::Ref<const Eigen::Matrix<T, 3, 3>>& J,
+                              const Eigen::Ref<const Eigen::Matrix<T, 3, 3>>& J_inv) {
+    
+    acado_online_data_.block(0, 0, 9, ACADO_N+1) = J.replicate(1, ACADO_N+1).template cast<float>();
+    acado_online_data_.block(9, 0, 9, ACADO_N+1) = J_inv.replicate(1, ACADO_N+1).template cast<float>();
+    
+    return true;
+    
 }
 
 // Set a reference pose.

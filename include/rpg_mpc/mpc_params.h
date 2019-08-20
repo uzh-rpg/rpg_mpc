@@ -50,7 +50,9 @@ class MpcParams {
     p_B_C_(Eigen::Matrix<T, 3, 1>::Zero()),
     q_B_C_(Eigen::Quaternion<T>(1.0, 0.0, 0.0, 0.0)),
     Q_(Eigen::Matrix<T, kCostSize, kCostSize>::Zero()),
-    R_(Eigen::Matrix<T, kInputSize, kInputSize>::Zero())
+    R_(Eigen::Matrix<T, kInputSize, kInputSize>::Zero()),
+    J_(Eigen::Matrix<T, 3, 3>::Zero()),
+    J_inv_(Eigen::Matrix<T, 3, 3>::Zero())
   {
   }
 
@@ -152,10 +154,26 @@ class MpcParams {
       q_B_C_ = Eigen::Quaternion<T>(q_B_C[0], q_B_C[1], q_B_C[2], q_B_C[3]);
     }
 
+    T J_xx, J_yy, J_zz;
+    GET_PARAM(J_xx);
+    GET_PARAM(J_yy);
+    GET_PARAM(J_zz);
+    if(J_xx   <= 0.0 ||
+       J_yy   <= 0.0 ||
+       J_zz   <= 0.0 )      // Inertia cannot be negative
+    {
+      ROS_ERROR("MPC: Inertia J has negative enries!");
+      return false;
+    }
+
+    J_ = (Eigen::Matrix<T, 3, 1>() << J_xx, J_yy, J_zz).finished().asDiagonal();
+    J_inv_ = J_.inverse();
+
     quadrotor_common::getParam("print_info", print_info_, false, pnh);
     if(print_info_) ROS_INFO("MPC: Informative printing enabled.");
 
     changed_ = true;
+
 
     #undef GET_PARAM
     #undef GET_PARAM_OPT
@@ -179,6 +197,8 @@ class MpcParams {
 
   Eigen::Matrix<T, 3, 1> p_B_C_;
   Eigen::Quaternion<T> q_B_C_;
+
+  Eigen::Matrix<T, 3, 3> J_, J_inv_;
 
   Eigen::Matrix<T, kCostSize, kCostSize> Q_;
   Eigen::Matrix<T, kInputSize, kInputSize> R_;

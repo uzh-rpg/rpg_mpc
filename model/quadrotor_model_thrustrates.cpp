@@ -51,13 +51,25 @@ int main( ){
   DifferentialState     p_x, p_y, p_z;
   DifferentialState     q_w, q_x, q_y, q_z;
   DifferentialState     v_x, v_y, v_z;
-  Control               T, w_x, w_y, w_z;
+  DifferentialState     w_x, w_y, w_z;
+  Control               Tc; //Single rotors thrusts
+  Control               tau_x, tau_y, tau_z; // Torques
   DifferentialEquation  f;
   Function              h, hN;
-  OnlineData            p_F_x, p_F_y, p_F_z;
-  OnlineData            t_B_C_x, t_B_C_y, t_B_C_z;
-  OnlineData            q_B_C_w, q_B_C_x, q_B_C_y, q_B_C_z;
+  OnlineData            J11, J12, J13, J21, J22, J23, J31, J32, J33; //Inertia Matrix 
+  OnlineData            Jinv11, Jinv12, Jinv13, Jinv21, Jinv22, Jinv23, Jinv31, Jinv32, Jinv33; //Inverted Inertia Matrix
 
+  
+  // Intermediate states for angular acceleration computation
+  // J*w
+  IntermediateState     Jw1 = J11 * w_x + J12 * w_y + J13 * w_z;
+  IntermediateState     Jw2 = J21 * w_x + J22 * w_y + J23 * w_z;
+  IntermediateState     Jw3 = J31 * w_x + J32 * w_y + J33 * w_z;
+  // w x Jw (cross product)   
+  IntermediateState     WcrossJw1 = w_y * Jw3 - w_z * Jw2;
+  IntermediateState     WcrossJw2 = w_z * Jw1 - w_x * Jw3;
+  IntermediateState     WcrossJw3 = w_x * Jw2 - w_y * Jw1;
+      
   // Parameters with exemplary values. These are set/overwritten at runtime.
   const double t_start = 0.0;     // Initial time [s]
   const double t_end = 2.0;       // Time horizon [s]
@@ -68,41 +80,48 @@ int main( ){
   const double w_max_xy = 3;      // Maximal pitch and roll rate [rad/s]
   const double T_min = 2;         // Minimal thrust [N]
   const double T_max = 20;        // Maximal thrust [N]
-
-  // Bias to prevent division by zero.
-  const double epsilon = 0.1;     // Camera projection recover bias [m]
+    
+  // Coefficients of fitted model
+  const double coeff_v_x = 0.2161; 
+  const double coeff_v_y = 0.2158;  
+  const double coeff_v_z = 0.5534;  
+  const double coeff_x_v_y=  -0.9841;
+  const double coeff_x_w_x= -8.0027;
+  const double coeff_y_v_x= 1.0530;
+  const double coeff_y_w_y= -6.5687;
 
 
   // System Dynamics
   f << dot(p_x) ==  v_x;
   f << dot(p_y) ==  v_y;
   f << dot(p_z) ==  v_z;
-  f << dot(q_w) ==  0.5 * ( - w_x * q_x - w_y * q_y - w_z * q_z);
-  f << dot(q_x) ==  0.5 * ( w_x * q_w + w_z * q_y - w_y * q_z);
-  f << dot(q_y) ==  0.5 * ( w_y * q_w - w_z * q_x + w_x * q_z);
-  f << dot(q_z) ==  0.5 * ( w_z * q_w + w_y * q_x + w_z * q_y);
-  f << dot(v_x) ==  2 * ( q_w * q_y + q_x * q_z ) * T;
-  f << dot(v_y) ==  2 * ( q_y * q_z - q_w * q_x ) * T;
-  f << dot(v_z) ==  ( 1 - 2 * q_x * q_x - 2 * q_y * q_y ) * T - g_z;
+  f << dot(q_w) ==  0.5 * ( - w_x * q_x - w_y * q_y - w_z * q_z); // not sure
+  f << dot(q_x) ==  0.5 * ( w_x * q_w + w_z * q_y - w_y * q_z); // not sure
+  f << dot(q_y) ==  0.5 * ( w_y * q_w - w_z * q_x + w_x * q_z); // not sure
+  f << dot(q_z) ==  0.5 * ( w_z * q_w + w_y * q_x + w_z * q_y); // not sure
+  f << dot(v_x) ==  2 * ( q_w * q_y + q_x * q_z ) * Tc + coeff_v_x * v_x;
+  f << dot(v_y) ==  2 * ( q_y * q_z - q_w * q_x ) * Tc + coeff_v_y * v_y;
+  f << dot(v_z) ==  ( 1 - 2 * q_x * q_x - 2 * q_y * q_y ) * Tc - g_z + coeff_v_z * v_z;
+  // angular dynamics
+  f << dot(w_x) ==  Jinv11 * (tau_x - WcrossJw1 + coeff_x_v_y * v_y + coeff_x_w_x * w_x) + Jinv12 * (tau_y - WcrossJw2 + coeff_y_v_x * v_x + coeff_y_w_y * w_y) + Jinv13 * (tau_z - WcrossJw3);
+  f << dot(w_y) ==  Jinv21 * (tau_x - WcrossJw1 + coeff_x_v_y * v_y + coeff_x_w_x * w_x) + Jinv22 * (tau_y - WcrossJw2 + coeff_y_v_x * v_x + coeff_y_w_y * w_y) + Jinv23 * (tau_z - WcrossJw3);
+  f << dot(w_z) ==  Jinv31 * (tau_x - WcrossJw1 + coeff_x_v_y * v_y + coeff_x_w_x * w_x) + Jinv32 * (tau_y - WcrossJw2 + coeff_y_v_x * v_x + coeff_y_w_y * w_y) + Jinv33 * (tau_z - WcrossJw3);
 
-  // Intermediate states to calculate point of interest projection!
-  IntermediateState intSx = ((((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)+((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)*(-(-q_x)*q_B_C_z-q_B_C_w*q_y-q_B_C_x*q_z-q_B_C_y*q_w)+((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)*(-(-q_y)*q_B_C_x-q_B_C_w*q_z-q_B_C_y*q_x-q_B_C_z*q_w)+((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y)*((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y))*(p_F_x-p_x)+(((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)+((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)+((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)*((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y)+(-(-q_x)*q_B_C_z-q_B_C_w*q_y-q_B_C_x*q_z-q_B_C_y*q_w)*(-(-q_z)*q_B_C_y-q_B_C_w*q_x-q_B_C_x*q_w-q_B_C_z*q_y))*(p_F_y-p_y)+(((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*(-(-q_x)*q_B_C_z-q_B_C_w*q_y-q_B_C_x*q_z-q_B_C_y*q_w)+((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*(-(-q_x)*q_B_C_z-q_B_C_w*q_y-q_B_C_x*q_z-q_B_C_y*q_w)+((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)*((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y)+((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)*((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y))*(p_F_z-p_z));
-  IntermediateState intSy = ((((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)+((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)*((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)+((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)*(-(-q_y)*q_B_C_x-q_B_C_w*q_z-q_B_C_y*q_x-q_B_C_z*q_w)+((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y)*(-(-q_z)*q_B_C_y-q_B_C_w*q_x-q_B_C_x*q_w-q_B_C_z*q_y))*(p_F_y-p_y)+(((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y)+((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y)+((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)*((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)+(-(-q_x)*q_B_C_z-q_B_C_w*q_y-q_B_C_x*q_z-q_B_C_y*q_w)*(-(-q_y)*q_B_C_x-q_B_C_w*q_z-q_B_C_y*q_x-q_B_C_z*q_w))*(p_F_z-p_z)+(((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*(-(-q_y)*q_B_C_x-q_B_C_w*q_z-q_B_C_y*q_x-q_B_C_z*q_w)+((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*(-(-q_y)*q_B_C_x-q_B_C_w*q_z-q_B_C_y*q_x-q_B_C_z*q_w)+((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)*((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y)+((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)*((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y))*(p_F_x-p_x));
-  IntermediateState intSz = ((((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)+((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)*(-(-q_x)*q_B_C_z-q_B_C_w*q_y-q_B_C_x*q_z-q_B_C_y*q_w)+((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)*((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)+((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y)*(-(-q_z)*q_B_C_y-q_B_C_w*q_x-q_B_C_x*q_w-q_B_C_z*q_y))*(p_F_z-p_z)+(((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)+((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)+((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)*((-q_z)*q_B_C_y+q_B_C_w*q_x+q_B_C_x*q_w+q_B_C_z*q_y)+(-(-q_y)*q_B_C_x-q_B_C_w*q_z-q_B_C_y*q_x-q_B_C_z*q_w)*(-(-q_z)*q_B_C_y-q_B_C_w*q_x-q_B_C_x*q_w-q_B_C_z*q_y))*(p_F_x-p_x)+(((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*(-(-q_z)*q_B_C_y-q_B_C_w*q_x-q_B_C_x*q_w-q_B_C_z*q_y)+((-q_x)*q_B_C_x+(-q_y)*q_B_C_y+(-q_z)*q_B_C_z+q_B_C_w*q_w)*(-(-q_z)*q_B_C_y-q_B_C_w*q_x-q_B_C_x*q_w-q_B_C_z*q_y)+((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)*((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w)+((-q_x)*q_B_C_z+q_B_C_w*q_y+q_B_C_x*q_z+q_B_C_y*q_w)*((-q_y)*q_B_C_x+q_B_C_w*q_z+q_B_C_y*q_x+q_B_C_z*q_w))*(p_F_y-p_y));
 
   // Cost: Sum(i=0, ..., N-1){h_i' * Q * h_i} + h_N' * Q_N * h_N
   // Running cost vector consists of all states and inputs.
   h << p_x << p_y << p_z
     << q_w << q_x << q_y << q_z
     << v_x << v_y << v_z
-    << intSx/(intSz + epsilon) << intSy/(intSz + epsilon) 
-    << T << w_x << w_y << w_z;
+    << w_x << w_y << w_z
+    << Tc << tau_x << tau_y << tau_z;
 
   // End cost vector consists of all states (no inputs at last state).
   hN << p_x << p_y << p_z
     << q_w << q_x << q_y << q_z
     << v_x << v_y << v_z
-    << intSx/(intSz + epsilon) << intSy/(intSz + epsilon);
+    << w_x << w_y << w_z;
+
 
   // Running cost weight matrix
   DMatrix Q(h.getDim(), h.getDim());
@@ -117,12 +136,14 @@ int main( ){
   Q(7,7) = 10;   // vx
   Q(8,8) = 10;   // vy
   Q(9,9) = 10;   // vz
-  Q(10,10) = 0;  // Cost on perception
-  Q(11,11) = 0;  // Cost on perception
-  Q(12,12) = 1;   // T
-  Q(13,13) = 1;   // wx
-  Q(14,14) = 1;   // wy
-  Q(15,15) = 1;   // wz
+  Q(10,10) = 10;  // wx
+  Q(11,11) = 10;  // wy
+  Q(12,12) = 10;  // wz
+  Q(13,13) = 1;   // Tc
+  Q(14,14) = 1;   // tau_x
+  Q(15,15) = 1;   // tau_y
+  Q(16,16) = 1;   // tau_z
+
 
   // End cost weight matrix
   DMatrix QN(hN.getDim(), hN.getDim());
@@ -137,8 +158,9 @@ int main( ){
   QN(7,7) = Q(7,7);   // vx
   QN(8,8) = Q(8,8);   // vy
   QN(9,9) = Q(9,9);   // vz
-  QN(10,10) = 0;  // Cost on perception
-  QN(11,11) = 0;  // Cost on perception
+  QN(10,10) = QN(10,10); 
+  QN(11,11) = QN(11,11);  
+  QN(12,12) = QN(12,12); 
 
   // Set a reference for the analysis (if CODE_GEN is false).
   // Reference is at x = 2.0m in hover (qw = 1).
@@ -178,7 +200,7 @@ int main( ){
   ocp.subjectTo(-w_max_xy <= w_x <= w_max_xy);
   ocp.subjectTo(-w_max_xy <= w_y <= w_max_xy);
   ocp.subjectTo(-w_max_yaw <= w_z <= w_max_yaw);
-  ocp.subjectTo( T_min <= T <= T_max);
+  ocp.subjectTo( T_min <= Tc <= T_max);
 
   ocp.setNOD(10);
 
@@ -208,12 +230,15 @@ int main( ){
     window1.addSubplot( v_x,"verlocity x" );
     window1.addSubplot( v_y,"verlocity y" );
     window1.addSubplot( v_z,"verlocity z" );
+    window1.addSubplot( w_x,"angular vel x" );
+    window1.addSubplot( w_y,"angular vel y" );
+    window1.addSubplot( w_z,"angular vel z" ); 
 
     GnuplotWindow window3( PLOT_AT_EACH_ITERATION );
-    window3.addSubplot( w_x,"rotation-acc x" );
-    window3.addSubplot( w_y,"rotation-acc y" );
-    window3.addSubplot( w_z,"rotation-acc z" ); 
-    window3.addSubplot( T,"Thrust" );
+    window3.addSubplot( tau_x,"torque x" );
+    window3.addSubplot( tau_y,"torque y" );
+    window3.addSubplot( tau_z,"torque z" ); 
+    window3.addSubplot( Tc,"Thrust" );
 
 
     // Define an algorithm to solve it.

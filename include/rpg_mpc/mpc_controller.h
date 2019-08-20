@@ -38,6 +38,8 @@
 #include <std_msgs/Bool.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 
+#include <foldable_drone_control/low_level_control.h>
+
 #include "rpg_mpc/mpc_wrapper.h"
 #include "rpg_mpc/mpc_params.h"
 
@@ -69,7 +71,7 @@ class MpcController {
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  static_assert(kStateSize == 10,
+  static_assert(kStateSize == 13,
     "MpcController: Wrong model size. Number of states does not match.");
   static_assert(kInputSize == 4,
     "MpcController: Wrong model size. Number of inputs does not match.");
@@ -110,6 +112,8 @@ class MpcController {
   void preparationThread();
 
   bool setNewParams(MpcParams<T>& params);
+
+  foldable_drone_control::LowLevelControl low_level_controller_;
 
   // Handles
   ros::NodeHandle nh_;

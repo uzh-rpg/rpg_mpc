@@ -14,6 +14,7 @@
 
   <depend>autopilot</depend>
   <depend>geometry_msgs</depend>
+  <depend>foldable_drone_control</depend>
   <depend>quadrotor_common</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>

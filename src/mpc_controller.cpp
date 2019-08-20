@@ -33,6 +33,7 @@ MpcController<T>::MpcController(
   const ros::NodeHandle & nh, const ros::NodeHandle & pnh) :
   nh_(nh),
   pnh_(pnh),
+  low_level_controller_(nh_, pnh_),
   mpc_wrapper_(MpcWrapper<T>()),
   timing_feedback_(T(1e-3)),
   timing_preparation_(T(1e-3)),
@@ -68,7 +69,7 @@ void MpcController<T>::pointOfInterestCallback(
   point_of_interest_(0) = msg->point.x;
   point_of_interest_(1) = msg->point.y;
   point_of_interest_(2) = msg->point.z;
-  mpc_wrapper_.setPointOfInterest(point_of_interest_);
+  //mpc_wrapper_.setPointOfInterest(point_of_interest_);
 }
 
 template <typename T>
@@ -237,10 +238,18 @@ quadrotor_common::ControlCommand MpcController<T>::updateControlCommand(
     std::min(params_.max_bodyrate_z_, input_bounded(INPUT::kRateZ)));
 
   quadrotor_common::ControlCommand command;
+    
+  Eigen::Vector4d inputs;
+  inputs(0) = static_cast<double>(input_bounded(INPUT::kThrust));
+  inputs(1) = static_cast<double>(input_bounded(INPUT::kRateX));
+  inputs(2) = static_cast<double>(input_bounded(INPUT::kRateY));
+  inputs(3) = static_cast<double>(input_bounded(INPUT::kRateZ));
+    
+  Eigen::Vector4d single_rotor_thrusts = low_level_controller_.mixer(inputs);
 
   command.timestamp = time;
   command.armed = true;
-  command.control_mode = quadrotor_common::ControlMode::BODY_RATES;
+  command.control_mode = quadrotor_common::ControlMode::ROTOR_THRUSTS;
   command.expected_execution_time = time;
   command.collective_thrust = input_bounded(INPUT::kThrust);
   command.bodyrates.x() = input_bounded(INPUT::kRateX);
@@ -250,6 +259,11 @@ quadrotor_common::ControlCommand MpcController<T>::updateControlCommand(
   command.orientation.x() = state(STATE::kOriX);
   command.orientation.y() = state(STATE::kOriY);
   command.orientation.z() = state(STATE::kOriZ);
+  command.rotor_thrusts.resize(4);
+  command.rotor_thrusts(0) = single_rotor_thrusts(0);  
+  command.rotor_thrusts(1) = single_rotor_thrusts(1);  
+  command.rotor_thrusts(2) = single_rotor_thrusts(2);  
+  command.rotor_thrusts(3) = single_rotor_thrusts(3);  
   return command;
 }
 
@@ -304,7 +318,8 @@ bool MpcController<T>::setNewParams(MpcParams<T>& params)
   mpc_wrapper_.setLimits(
     params.min_thrust_, params.max_thrust_,
     params.max_bodyrate_xy_, params.max_bodyrate_z_);
-  mpc_wrapper_.setCameraParameters(params.p_B_C_, params.q_B_C_);
+  //mpc_wrapper_.setCameraParameters(params.p_B_C_, params.q_B_C_);
+  mpc_wrapper_.setInertia(params.J_, params.J_inv_);
   params.changed_ = false;
   return true;
 }

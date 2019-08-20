@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++0x  -rdynamic CMakeFiles/quadrotor_model_codegen.dir/quadrotor_model_thrustrates.cpp.o  -o quadrotor_model_codegen -Wl,-rpath,/home/bianca/ACADOtoolkit/build/lib /home/bianca/ACADOtoolkit/build/lib/libacado_toolkit_s.so 

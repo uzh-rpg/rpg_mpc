@@ -69,6 +69,10 @@ class MpcWrapper
   bool setPointOfInterest(
     const Eigen::Ref<const Eigen::Matrix<T, 3, 1>>& position);
 
+  bool setInertia(
+    const Eigen::Ref<const Eigen::Matrix<T, 3, 3>>& J,
+    const Eigen::Ref<const Eigen::Matrix<T, 3, 3>>& J_inv);
+
   bool setReferencePose(
     const Eigen::Ref<const Eigen::Matrix<T, kStateSize, 1>> state);
   bool setTrajectory(
