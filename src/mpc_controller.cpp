@@ -171,8 +171,9 @@ bool MpcController<T>::setReference(
     q_heading = Eigen::Quaternion<T>(Eigen::AngleAxis<T>(
         reference_trajectory.points.front().heading,
         Eigen::Matrix<T, 3, 1>::UnitZ()));
-    q_orientation = q_heading *
-                    reference_trajectory.points.front().orientation.template cast<T>();
+//    q_orientation = q_heading *
+//                    reference_trajectory.points.front().orientation.template cast<T>();
+    q_orientation = reference_trajectory.points.front().orientation.template cast<T>() * q_heading;
     reference_states_ = (Eigen::Matrix<T, kStateSize, 1>() <<
                                                            reference_trajectory.points.front().position.template cast<T>(),
         q_orientation.w(),
