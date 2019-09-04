@@ -22,20 +22,20 @@
 
 # Cost on states
 Q_pos_xy:     100   # Cost for horizontal positon error
-Q_pos_z:      500   # Cost for vertical position error
-Q_attitude:   10    # Cost for attitude error
-Q_velocity:   1    # Cost for velocity error
+Q_pos_z:      1000   # Cost for vertical position error
+Q_attitude:   100    # Cost for attitude error
+Q_velocity:   10    # Cost for velocity error
 Q_perception: 0     # Cost for reprojection error to camera optical axis (PAMPC)
 
 # Cost on Inputs
-R_thrust:     0.01     # Cost on thrust input
-R_pitchroll:  0.01     # Cost on pitch and roll rate
-R_yaw:        0.1     # Cost on yaw ratte
+R_thrust:     0.1     # Cost on thrust input
+R_pitchroll:  0.1     # Cost on pitch and roll rate
+R_yaw:        1.0     # Cost on yaw ratte
 
 # Exponential scaling: W_i = W * exp(-i/N * cost_scaling).
 # cost_scaling = 0 means no scaling W_i = W. 
-state_cost_exponential: 0.0     # Scaling for state costs
-input_cost_exponential: 0.0     # scaling for input costs
+state_cost_exponential: 0.1     # Scaling for state costs
+input_cost_exponential: 1.0     # scaling for input costs
 
 # Limits for inputs
 max_bodyrate_xy:    20.0       # ~ pi [rad/s]

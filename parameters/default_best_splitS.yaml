@@ -48,4 +48,4 @@ p_B_C:      [ 0.0, 0.0, 0.0 ]               # camera in body center [m]
 q_B_C:      [ 0.6427876, 0, 0.7660444, 0 ]  # 45° pitched down
 
 # Print information such as timing to terminal
-print_info:       true
+print_info:       false
