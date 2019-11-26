@@ -30,7 +30,7 @@ namespace rpg_mpc {
 
 template<typename T>
 MpcController<T>::MpcController(
-    const ros::NodeHandle& nh, const ros::NodeHandle& pnh) :
+    const ros::NodeHandle& nh, const ros::NodeHandle& pnh, const std::string& topic) :
     nh_(nh),
     pnh_(pnh),
     mpc_wrapper_(MpcWrapper<T>()),
@@ -44,7 +44,7 @@ MpcController<T>::MpcController(
     predicted_inputs_(Eigen::Matrix<T, kInputSize, kSamples>::Zero()),
     point_of_interest_(Eigen::Matrix<T, 3, 1>::Zero()) {
   pub_predicted_trajectory_ =
-      nh_.advertise<nav_msgs::Path>("mpc/trajectory_predicted", 1);
+      nh_.advertise<nav_msgs::Path>(topic, 1); //("mpc/trajectory_predicted", 1);
 
   sub_point_of_interest_ = nh_.subscribe("mpc/point_of_interest", 1,
                                          &MpcController<T>::pointOfInterestCallback, this);

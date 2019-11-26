@@ -75,8 +75,10 @@ class MpcController {
   static_assert(kInputSize == 4,
     "MpcController: Wrong model size. Number of inputs does not match.");
 
-  MpcController(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
-  MpcController() : MpcController(ros::NodeHandle(), ros::NodeHandle("~")) {}
+  MpcController(const ros::NodeHandle & nh, const ros::NodeHandle & pnh, const std::string& topic);
+  MpcController() : MpcController(ros::NodeHandle(), ros::NodeHandle("~"), "mpc/trajectory_predicted") {}
+  MpcController(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : MpcController(nh, pnh, "mpc/trajectory_predicted") {}
+  MpcController(const std::string& topic) : MpcController(ros::NodeHandle(), ros::NodeHandle("~"), topic) {}
 
 
   quadrotor_common::ControlCommand off();
