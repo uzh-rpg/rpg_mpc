@@ -44,12 +44,12 @@ MpcController<T>::MpcController(
     predicted_inputs_(Eigen::Matrix<T, kInputSize, kSamples>::Zero()),
     point_of_interest_(Eigen::Matrix<T, 3, 1>::Zero()) {
   pub_predicted_trajectory_ =
-      nh_.advertise<nav_msgs::Path>(topic, 1); //("mpc/trajectory_predicted", 1);
+      nh_.advertise<nav_msgs::Path>(topic, 1);
 
   sub_point_of_interest_ = nh_.subscribe("mpc/point_of_interest", 1,
                                          &MpcController<T>::pointOfInterestCallback, this);
   sub_autopilot_off_ = nh_.subscribe("autopilot/off", 1,
-                                    &MpcController<T>::offCallback, this);
+                                     &MpcController<T>::offCallback, this);
 
   if (!params_.loadParameters(pnh_)) {
     ROS_ERROR("[%s] Could not load parameters.", pnh_.getNamespace().c_str());
