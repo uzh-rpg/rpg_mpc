@@ -109,7 +109,7 @@ quadrotor_common::ControlCommand MpcController<T>::run(
   // Get the feedback from MPC.
   mpc_wrapper_.setTrajectory(reference_states_, reference_inputs_);
   if (solve_from_scratch_) {
-    ROS_INFO("Solving MPC from Hover Conditions.");
+    ROS_INFO("Solving MPC with hover as initial guess.");
     mpc_wrapper_.solve(est_state_);
     solve_from_scratch_ = false;
   } else {

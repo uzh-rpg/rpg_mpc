@@ -57,60 +57,60 @@ enum STATE {
   kVelZ = 9
 };
 
-enum INPUT{
+enum INPUT {
   kThrust = 0,
   kRateX = 1,
   kRateY = 2,
   kRateZ = 3
 };
 
-template <typename T>
+template<typename T>
 class MpcController {
- public:
+public:
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   static_assert(kStateSize == 10,
-    "MpcController: Wrong model size. Number of states does not match.");
+                "MpcController: Wrong model size. Number of states does not match.");
   static_assert(kInputSize == 4,
-    "MpcController: Wrong model size. Number of inputs does not match.");
+                "MpcController: Wrong model size. Number of inputs does not match.");
 
-  MpcController(const ros::NodeHandle & nh, const ros::NodeHandle & pnh, const std::string& topic);
-  MpcController() : MpcController(ros::NodeHandle(), ros::NodeHandle("~"), "mpc/trajectory_predicted") {}
-  MpcController(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : MpcController(nh, pnh, "mpc/trajectory_predicted") {}
-  MpcController(const std::string& topic) : MpcController(ros::NodeHandle(), ros::NodeHandle("~"), topic) {}
+  MpcController(const ros::NodeHandle& nh,
+                const ros::NodeHandle& pnh,
+                const std::string& topic = "mpc/trajectory_predicted");
 
+  MpcController() : MpcController(ros::NodeHandle(), ros::NodeHandle("~")) {}
 
   quadrotor_common::ControlCommand off();
 
   quadrotor_common::ControlCommand run(
-    const quadrotor_common::QuadStateEstimate& state_estimate,
-    const quadrotor_common::Trajectory& reference_trajectory,
-    const MpcParams<T>& params);
+      const quadrotor_common::QuadStateEstimate& state_estimate,
+      const quadrotor_common::Trajectory& reference_trajectory,
+      const MpcParams<T>& params);
 
 
- private:
+private:
   // Internal helper functions.
 
   void pointOfInterestCallback(
-    const geometry_msgs::PointStamped::ConstPtr& msg);
+      const geometry_msgs::PointStamped::ConstPtr& msg);
 
   void offCallback(const std_msgs::Empty::ConstPtr& msg);
 
   bool setStateEstimate(
-    const quadrotor_common::QuadStateEstimate& state_estimate);
+      const quadrotor_common::QuadStateEstimate& state_estimate);
 
   bool setReference(const quadrotor_common::Trajectory& reference_trajectory);
 
   quadrotor_common::ControlCommand updateControlCommand(
-    const Eigen::Ref<const Eigen::Matrix<T, kStateSize, 1>> state,
-    const Eigen::Ref<const Eigen::Matrix<T, kInputSize, 1>> input,
-    ros::Time& time);
+      const Eigen::Ref<const Eigen::Matrix<T, kStateSize, 1>> state,
+      const Eigen::Ref<const Eigen::Matrix<T, kInputSize, 1>> input,
+      ros::Time& time);
 
   bool publishPrediction(
-    const Eigen::Ref<const Eigen::Matrix<T, kStateSize, kSamples+1>> states,
-    const Eigen::Ref<const Eigen::Matrix<T, kInputSize, kSamples>> inputs,
-    ros::Time& time);
+      const Eigen::Ref<const Eigen::Matrix<T, kStateSize, kSamples + 1>> states,
+      const Eigen::Ref<const Eigen::Matrix<T, kInputSize, kSamples>> inputs,
+      ros::Time& time);
 
   void preparationThread();
 
@@ -138,13 +138,12 @@ class MpcController {
   T timing_feedback_, timing_preparation_;
   bool solve_from_scratch_;
   Eigen::Matrix<T, kStateSize, 1> est_state_;
-  Eigen::Matrix<T, kStateSize, kSamples+1> reference_states_;
-  Eigen::Matrix<T, kInputSize, kSamples+1> reference_inputs_;
-  Eigen::Matrix<T, kStateSize, kSamples+1> predicted_states_;
+  Eigen::Matrix<T, kStateSize, kSamples + 1> reference_states_;
+  Eigen::Matrix<T, kInputSize, kSamples + 1> reference_inputs_;
+  Eigen::Matrix<T, kStateSize, kSamples + 1> predicted_states_;
   Eigen::Matrix<T, kInputSize, kSamples> predicted_inputs_;
   Eigen::Matrix<T, 3, 1> point_of_interest_;
 };
-
 
 
 } // namespace MPC
