@@ -281,7 +281,7 @@ bool MpcWrapper<T>::update(
     return false;
   }
 
-  // Check if estimated and reference quaternion live in sthe same hemisphere.
+  // Check if estimated and reference quaternion live in the same hemisphere.
   acado_initial_state_ = state.template cast<float>();
   if(acado_initial_state_.segment(3,4).dot(
     Eigen::Vector4f(acado_reference_states_.block(3,0,4,1)))<(T)0.0)

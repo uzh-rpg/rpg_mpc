@@ -88,6 +88,12 @@ public:
       const quadrotor_common::Trajectory& reference_trajectory,
       const MpcParams<T>& params);
 
+  void run(
+      const quadrotor_common::QuadStateEstimate& state_estimate,
+      const quadrotor_common::Trajectory& reference_trajectory,
+      const MpcParams<T>& params, 
+      float* optimized_inputs);
+
 
 private:
   // Internal helper functions.
