@@ -143,22 +143,6 @@ class MpcParams {
     return true;
   }
 
-  bool loadParameters(const bool use_default_params) {
-    // Set state and input cost matrices.
-    Q_ = (Eigen::Matrix<T, kCostSize, 1>() << 200.0, 200.0, 500.0, 50.0, 50.0,
-          50.0, 50.0, 10.0, 10.0, 10.0, 0.0, 0.0)
-             .finished()
-             .asDiagonal();
-    R_ = (Eigen::Matrix<T, kInputSize, 1>() << 0.1, 0.1, 0.1, 0.1)
-             .finished()
-             .asDiagonal();
-    max_bodyrate_xy_ = 20.0;
-    max_bodyrate_z_ = 5.0;
-    min_thrust_ = 1.0;
-    max_thrust_ = 40.0;
-    return true;
-  }
-
   bool changed_;
 
   bool print_info_;

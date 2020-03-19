@@ -52,16 +52,11 @@ MpcController<T>::MpcController(const ros::NodeHandle& nh,
   sub_autopilot_off_ =
       nh_.subscribe("autopilot/off", 1, &MpcController<T>::offCallback, this);
 
-  ROS_WARN("Setting hardcoded MPC params!!!");
-  if (!params_.loadParameters(true)) {
+  if (!params_.loadParameters(pnh_)) {
     ROS_ERROR("[%s] Could not load parameters.", pnh_.getNamespace().c_str());
     ros::shutdown();
     return;
   }
-  // if (!params_.loadParameters(pnh_)) {
-  //   ROS_ERROR("[%s] Could not load parameters.",
-  //   pnh_.getNamespace().c_str()); ros::shutdown(); return;
-  // }
   setNewParams(params_);
 
   solve_from_scratch_ = true;
@@ -118,7 +113,6 @@ quadrotor_common::ControlCommand MpcController<T>::run(
     mpc_wrapper_.solve(est_state_);
     solve_from_scratch_ = false;
   } else {
-    printf("Performing update step...\n");
     mpc_wrapper_.update(est_state_, do_preparation_step);
   }
   mpc_wrapper_.getStates(predicted_states_);
@@ -171,16 +165,12 @@ void MpcController<T>::run(
     mpc_wrapper_.solve(est_state_);
     solve_from_scratch_ = false;
   } else {
-    // for (int i = 0; i < 10; i++) {
-    ROS_INFO("Performing MPC update step.");
     mpc_wrapper_.update(est_state_, do_preparation_step);
-    // }
   }
   mpc_wrapper_.getStates(predicted_states_);
   mpc_wrapper_.getInputs(predicted_inputs_);
 
   // Publish the predicted trajectory.
-  // publishPrediction(predicted_states_, predicted_inputs_, call_time);
 
   // Start a thread to prepare for the next execution.
   preparation_thread_ = std::thread(&MpcController<T>::preparationThread, this);
@@ -201,10 +191,6 @@ void MpcController<T>::run(
     optimized_inputs[4 * i + 2] = static_cast<float>(predicted_inputs_(2, i));
     optimized_inputs[4 * i + 3] = static_cast<float>(predicted_inputs_(3, i));
   }
-  // Return the input control command.
-  // return updateControlCommand(predicted_states_.col(0),
-  //                             predicted_inputs_.col(0),
-  //                             call_time);
 }
 
 template <typename T>
