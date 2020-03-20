@@ -142,7 +142,8 @@ template <typename T>
 void MpcController<T>::run(
     const quadrotor_common::QuadStateEstimate& state_estimate,
     const quadrotor_common::Trajectory& reference_trajectory,
-    const MpcParams<T>& params, float* optimized_inputs) {
+    const MpcParams<T>& params, float* optimized_states,
+    float* optimized_inputs) {
   ros::Time call_time = ros::Time::now();
   const clock_t start = clock();
   if (params.changed_) {
@@ -184,12 +185,25 @@ void MpcController<T>::run(
                       timing_feedback_ * 1000,
                       (timing_feedback_ + timing_preparation_) * 1000);
 
-  // write the optimized inputs to the array
+  // copy the optimized states & inputs
   for (int i = 0; i < 20; i++) {
+    // clang-format off
     optimized_inputs[4 * i + 0] = static_cast<float>(predicted_inputs_(0, i));
     optimized_inputs[4 * i + 1] = static_cast<float>(predicted_inputs_(1, i));
     optimized_inputs[4 * i + 2] = static_cast<float>(predicted_inputs_(2, i));
     optimized_inputs[4 * i + 3] = static_cast<float>(predicted_inputs_(3, i));
+
+    optimized_states[10 * i + 0] = static_cast<float>(predicted_states_(0, i + 1));
+    optimized_states[10 * i + 1] = static_cast<float>(predicted_states_(1, i + 1));
+    optimized_states[10 * i + 2] = static_cast<float>(predicted_states_(2, i + 1));
+    optimized_states[10 * i + 3] = static_cast<float>(predicted_states_(3, i + 1));
+    optimized_states[10 * i + 4] = static_cast<float>(predicted_states_(4, i + 1));
+    optimized_states[10 * i + 5] = static_cast<float>(predicted_states_(5, i + 1));
+    optimized_states[10 * i + 6] = static_cast<float>(predicted_states_(6, i + 1));
+    optimized_states[10 * i + 7] = static_cast<float>(predicted_states_(7, i + 1));
+    optimized_states[10 * i + 8] = static_cast<float>(predicted_states_(8, i + 1));
+    optimized_states[10 * i + 9] = static_cast<float>(predicted_states_(9, i + 1));
+    // clang-format on
   }
 }
 

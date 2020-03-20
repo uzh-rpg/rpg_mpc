@@ -91,7 +91,7 @@ public:
   void run(
       const quadrotor_common::QuadStateEstimate& state_estimate,
       const quadrotor_common::Trajectory& reference_trajectory,
-      const MpcParams<T>& params, 
+      const MpcParams<T>& params, float* optimized_states,
       float* optimized_inputs);
 
 
