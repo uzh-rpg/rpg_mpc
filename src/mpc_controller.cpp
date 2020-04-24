@@ -94,8 +94,6 @@ quadrotor_common::ControlCommand MpcController<T>::run(
   ros::Time call_time = ros::Time::now();
   const clock_t start = clock();
 
-  // ROS_INFO("Running MPC at time %.3f", ros::Time::now().toSec());
-
   if (params.changed_) {
     params_ = params;
     setNewParams(params_);
