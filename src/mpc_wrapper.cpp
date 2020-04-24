@@ -265,6 +265,8 @@ bool MpcWrapper<T>::solve(
 
   acado_inputs_ = kHoverInput_.replicate(1, kSamples);
 
+  prepare();
+
   return update(state);
 }
 
