@@ -172,8 +172,28 @@ void MpcController<T>::run(
   mpc_wrapper_.getStates(predicted_states_);
   mpc_wrapper_.getInputs(predicted_inputs_);
 
-  // Publish the predicted trajectory.
-
+  int len_horizon = predicted_inputs_.cols();
+  // copy the optimized states & inputs
+  // clang-format off
+  for (int i = 0; i <= len_horizon; i++) {
+    if(i < len_horizon) {
+      optimized_inputs[4 * i + 0] = static_cast<float>(predicted_inputs_(kThrust, i));
+      optimized_inputs[4 * i + 1] = static_cast<float>(predicted_inputs_(kRateX, i));
+      optimized_inputs[4 * i + 2] = static_cast<float>(predicted_inputs_(kRateY, i));
+      optimized_inputs[4 * i + 3] = static_cast<float>(predicted_inputs_(kRateZ, i));
+    }
+    optimized_states[10 * i + 0] = static_cast<float>(predicted_states_(kPosX, i));
+    optimized_states[10 * i + 1] = static_cast<float>(predicted_states_(kPosY, i));
+    optimized_states[10 * i + 2] = static_cast<float>(predicted_states_(kPosZ, i));
+    optimized_states[10 * i + 3] = static_cast<float>(predicted_states_(kOriW, i));
+    optimized_states[10 * i + 4] = static_cast<float>(predicted_states_(kOriX, i));
+    optimized_states[10 * i + 5] = static_cast<float>(predicted_states_(kOriY, i));
+    optimized_states[10 * i + 6] = static_cast<float>(predicted_states_(kOriZ, i));
+    optimized_states[10 * i + 7] = static_cast<float>(predicted_states_(kVelX, i));
+    optimized_states[10 * i + 8] = static_cast<float>(predicted_states_(kVelY, i));
+    optimized_states[10 * i + 9] = static_cast<float>(predicted_states_(kVelZ, i));
+  }
+  // clang-format on
   // Start a thread to prepare for the next execution.
   preparation_thread_ = std::thread(&MpcController<T>::preparationThread, this);
 
@@ -185,27 +205,6 @@ void MpcController<T>::run(
     ROS_INFO_THROTTLE(1.0, "MPC Timing: Latency: %1.1f ms  |  Total: %1.1f ms",
                       timing_feedback_ * 1000,
                       (timing_feedback_ + timing_preparation_) * 1000);
-
-  // copy the optimized states & inputs
-  for (int i = 0; i < 20; i++) {
-    // clang-format off
-    optimized_inputs[4 * i + 0] = static_cast<float>(predicted_inputs_(kThrust, i));
-    optimized_inputs[4 * i + 1] = static_cast<float>(predicted_inputs_(kRateX, i));
-    optimized_inputs[4 * i + 2] = static_cast<float>(predicted_inputs_(kRateY, i));
-    optimized_inputs[4 * i + 3] = static_cast<float>(predicted_inputs_(kRateZ, i));
-
-    optimized_states[10 * i + 0] = static_cast<float>(predicted_states_(kPosX, i + 1));
-    optimized_states[10 * i + 1] = static_cast<float>(predicted_states_(kPosY, i + 1));
-    optimized_states[10 * i + 2] = static_cast<float>(predicted_states_(kPosZ, i + 1));
-    optimized_states[10 * i + 3] = static_cast<float>(predicted_states_(kOriW, i + 1));
-    optimized_states[10 * i + 4] = static_cast<float>(predicted_states_(kOriX, i + 1));
-    optimized_states[10 * i + 5] = static_cast<float>(predicted_states_(kOriY, i + 1));
-    optimized_states[10 * i + 6] = static_cast<float>(predicted_states_(kOriZ, i + 1));
-    optimized_states[10 * i + 7] = static_cast<float>(predicted_states_(kVelX, i + 1));
-    optimized_states[10 * i + 8] = static_cast<float>(predicted_states_(kVelY, i + 1));
-    optimized_states[10 * i + 9] = static_cast<float>(predicted_states_(kVelZ, i + 1));
-    // clang-format on
-  }
 }
 
 template <typename T>
