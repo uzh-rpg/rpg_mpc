@@ -143,8 +143,8 @@ template <typename T>
 void MpcController<T>::run(
     const quadrotor_common::QuadStateEstimate& state_estimate,
     const quadrotor_common::Trajectory& reference_trajectory,
-    const MpcParams<T>& params, float* optimized_states,
-    float* optimized_inputs) {
+    const MpcParams<T>& params, const bool solve_from_scratch,
+    float* optimized_states, float* optimized_inputs) {
   ros::Time call_time = ros::Time::now();
   const clock_t start = clock();
   if (params.changed_) {
@@ -159,7 +159,7 @@ void MpcController<T>::run(
   setReference(reference_trajectory);
 
   static const bool do_preparation_step(false);
-
+  solve_from_scratch_ = solve_from_scratch;
   // Get the feedback from MPC.
   mpc_wrapper_.setTrajectory(reference_states_, reference_inputs_);
   if (solve_from_scratch_) {
