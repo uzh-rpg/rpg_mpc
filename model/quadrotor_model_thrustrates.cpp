@@ -59,7 +59,7 @@ int main() {
 
   // Parameters with exemplary values. These are set/overwritten at runtime.
   const double t_start = 0.0;       // Initial time [s]
-  const double t_end = 2.0;         // Time horizon [s]
+  const double t_end = 5.0;         // Time horizon [s]
   const double dt = 0.1;            // Discretization time [s]
   const int N = round(t_end / dt);  // Number of nodes
   const double g_z = 9.8066;        // Gravity is everywhere [m/s^2]
