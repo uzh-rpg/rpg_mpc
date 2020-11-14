@@ -84,8 +84,8 @@ class MpcController {
 
   void run(const quadrotor_common::QuadStateEstimate& state_estimate,
            const quadrotor_common::Trajectory& reference_trajectory,
-           const MpcParams<T>& params, const bool solve_from_scratch, float* optimized_states,
-           float* optimized_inputs);
+           const MpcParams<T>& params, const bool solve_from_scratch, double* optimized_states,
+           double* optimized_inputs);
 
  private:
   // Internal helper functions.

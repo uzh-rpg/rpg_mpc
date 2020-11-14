@@ -144,7 +144,7 @@ void MpcController<T>::run(
     const quadrotor_common::QuadStateEstimate& state_estimate,
     const quadrotor_common::Trajectory& reference_trajectory,
     const MpcParams<T>& params, const bool solve_from_scratch,
-    float* optimized_states, float* optimized_inputs) {
+    double* optimized_states, double* optimized_inputs) {
   ros::Time call_time = ros::Time::now();
   const clock_t start = clock();
   if (params.changed_) {
@@ -177,21 +177,21 @@ void MpcController<T>::run(
   // clang-format off
   for (int i = 0; i <= len_horizon; i++) {
     if(i < len_horizon) {
-      optimized_inputs[4 * i + 0] = static_cast<float>(predicted_inputs_(kThrust, i));
-      optimized_inputs[4 * i + 1] = static_cast<float>(predicted_inputs_(kRateX, i));
-      optimized_inputs[4 * i + 2] = static_cast<float>(predicted_inputs_(kRateY, i));
-      optimized_inputs[4 * i + 3] = static_cast<float>(predicted_inputs_(kRateZ, i));
+      optimized_inputs[4 * i + 0] = static_cast<double>(predicted_inputs_(kThrust, i));
+      optimized_inputs[4 * i + 1] = static_cast<double>(predicted_inputs_(kRateX, i));
+      optimized_inputs[4 * i + 2] = static_cast<double>(predicted_inputs_(kRateY, i));
+      optimized_inputs[4 * i + 3] = static_cast<double>(predicted_inputs_(kRateZ, i));
     }
-    optimized_states[10 * i + 0] = static_cast<float>(predicted_states_(kPosX, i));
-    optimized_states[10 * i + 1] = static_cast<float>(predicted_states_(kPosY, i));
-    optimized_states[10 * i + 2] = static_cast<float>(predicted_states_(kPosZ, i));
-    optimized_states[10 * i + 3] = static_cast<float>(predicted_states_(kOriW, i));
-    optimized_states[10 * i + 4] = static_cast<float>(predicted_states_(kOriX, i));
-    optimized_states[10 * i + 5] = static_cast<float>(predicted_states_(kOriY, i));
-    optimized_states[10 * i + 6] = static_cast<float>(predicted_states_(kOriZ, i));
-    optimized_states[10 * i + 7] = static_cast<float>(predicted_states_(kVelX, i));
-    optimized_states[10 * i + 8] = static_cast<float>(predicted_states_(kVelY, i));
-    optimized_states[10 * i + 9] = static_cast<float>(predicted_states_(kVelZ, i));
+    optimized_states[10 * i + 0] = static_cast<double>(predicted_states_(kPosX, i));
+    optimized_states[10 * i + 1] = static_cast<double>(predicted_states_(kPosY, i));
+    optimized_states[10 * i + 2] = static_cast<double>(predicted_states_(kPosZ, i));
+    optimized_states[10 * i + 3] = static_cast<double>(predicted_states_(kOriW, i));
+    optimized_states[10 * i + 4] = static_cast<double>(predicted_states_(kOriX, i));
+    optimized_states[10 * i + 5] = static_cast<double>(predicted_states_(kOriY, i));
+    optimized_states[10 * i + 6] = static_cast<double>(predicted_states_(kOriZ, i));
+    optimized_states[10 * i + 7] = static_cast<double>(predicted_states_(kVelX, i));
+    optimized_states[10 * i + 8] = static_cast<double>(predicted_states_(kVelY, i));
+    optimized_states[10 * i + 9] = static_cast<double>(predicted_states_(kVelZ, i));
   }
   // clang-format on
   // Start a thread to prepare for the next execution.
