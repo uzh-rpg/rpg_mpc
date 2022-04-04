@@ -95,14 +95,14 @@ int main( ){
   h << p_x << p_y << p_z
     << q_w << q_x << q_y << q_z
     << v_x << v_y << v_z
-    << intSx/(intSz + epsilon) << intSy/(intSz + epsilon) 
+    << intSx/(sqrt(intSz * intSz + epsilon)) << intSy/(sqrt(intSz * intSz + epsilon))
     << T << w_x << w_y << w_z;
 
   // End cost vector consists of all states (no inputs at last state).
   hN << p_x << p_y << p_z
     << q_w << q_x << q_y << q_z
     << v_x << v_y << v_z
-    << intSx/(intSz + epsilon) << intSy/(intSz + epsilon);
+    << intSx/(sqrt(intSz * intSz + epsilon)) << intSy/(sqrt(intSz * intSz + epsilon));
 
   // Running cost weight matrix
   DMatrix Q(h.getDim(), h.getDim());
